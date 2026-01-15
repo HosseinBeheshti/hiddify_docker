@@ -1,0 +1,157 @@
+version: '3.8'
+
+services:
+  hiddify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hiddify-manager
+    restart: unless-stopped
+    
+    # Network ports
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    # Security: Limited capabilities instead of privileged
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    cap_drop:
+      - ALL
+    
+    # Security: Read-only root filesystem with specific writable volumes
+    # Commented out as it may cause issues with some operations
+    # read_only: true
+    
+    # Security: Prevent privilege escalation
+    security_opt:
+      - no-new-privileges:true
+    
+    # Resource limits to prevent container from consuming all host resources
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 512M
+    
+    # Volumes - strictly limited to specific paths
+    volumes:
+      # Data directory - all persistent data
+      - ./docker-data/hiddify:/hiddify-data:rw
+      # Logs directory
+      - ./docker-data/logs:/opt/hiddify-manager/log:rw
+      # Temporary files
+      - ./docker-data/tmp:/tmp:rw
+    
+    # Environment configuration
+    env_file:
+      - ./docker.env
+    
+    # Depends on database services
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    
+    # DNS configuration
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    
+    # Healthcheck
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  mariadb:
+    image: mariadb:11.2
+    container_name: hiddify-mariadb
+    restart: unless-stopped
+    
+    # Security settings
+    security_opt:
+      - no-new-privileges:true
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    # Environment
+    env_file:
+      - ./docker.env
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: 1
+      MYSQL_DATABASE: hiddifypanel
+      MYSQL_USER: hiddifypanel
+    
+    # Volumes - database data isolated
+    volumes:
+      - ./docker-data/mariadb:/var/lib/mysql:rw
+    
+    # Healthcheck
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: hiddify-redis
+    restart: unless-stopped
+    
+    # Security settings
+    security_opt:
+      - no-new-privileges:true
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    
+    # Environment
+    env_file:
+      - ./docker.env
+    
+    # Command with password
+    command: sh -c "redis-server --requirepass \"$${REDIS_PASSWORD}\" --appendonly yes"
+    
+    # Volumes - redis data isolated
+    volumes:
+      - ./docker-data/redis:/data:rw
+    
+    # Healthcheck
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Network configuration
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
