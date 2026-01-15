@@ -103,51 +103,56 @@ print_message "Verifying Docker installation..."
 docker --version
 docker compose version
 
+# Get the directory where the script is located (before changing directories)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+print_message "Source directory: $SCRIPT_DIR"
+
 # Create installation directory
 INSTALL_DIR="/opt/hiddify-docker"
 print_message "Creating installation directory: $INSTALL_DIR"
 sudo mkdir -p $INSTALL_DIR
 sudo chown -R $USER:$USER $INSTALL_DIR 2>/dev/null || sudo chown -R $SUDO_USER:$SUDO_USER $INSTALL_DIR
 
-cd $INSTALL_DIR
-
-# Copy Hiddify Docker files from current directory
+# Copy Hiddify Docker files from source directory
 print_message "Copying Hiddify Docker configuration files..."
-
-# Get the directory where the script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Copy required files to installation directory
 if [ -f "$SCRIPT_DIR/Dockerfile" ]; then
-    cp "$SCRIPT_DIR/Dockerfile" .
+    sudo cp "$SCRIPT_DIR/Dockerfile" "$INSTALL_DIR/"
 else
     print_error "Dockerfile not found in $SCRIPT_DIR"
     exit 1
 fi
 
 if [ -f "$SCRIPT_DIR/docker-compose.yml" ]; then
-    cp "$SCRIPT_DIR/docker-compose.yml" .
+    sudo cp "$SCRIPT_DIR/docker-compose.yml" "$INSTALL_DIR/"
 else
     print_error "docker-compose.yml not found in $SCRIPT_DIR"
     exit 1
 fi
 
 if [ -f "$SCRIPT_DIR/docker-entrypoint.sh" ]; then
-    cp "$SCRIPT_DIR/docker-entrypoint.sh" .
-    chmod +x docker-entrypoint.sh
+    sudo cp "$SCRIPT_DIR/docker-entrypoint.sh" "$INSTALL_DIR/"
+    sudo chmod +x "$INSTALL_DIR/docker-entrypoint.sh"
 else
     print_error "docker-entrypoint.sh not found in $SCRIPT_DIR"
     exit 1
 fi
 
 if [ -f "$SCRIPT_DIR/docker.env" ]; then
-    cp "$SCRIPT_DIR/docker.env" .
+    sudo cp "$SCRIPT_DIR/docker.env" "$INSTALL_DIR/"
 else
     print_error "docker.env not found in $SCRIPT_DIR"
     exit 1
 fi
 
+# Set ownership of copied files
+sudo chown -R $USER:$USER $INSTALL_DIR 2>/dev/null || sudo chown -R $SUDO_USER:$SUDO_USER $INSTALL_DIR
+
 print_message "All configuration files copied successfully"
+
+# Now change to installation directory
+cd $INSTALL_DIR
 
 # Generate strong passwords
 print_message "Generating secure passwords..."
