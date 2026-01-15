@@ -19,8 +19,6 @@ RUN apt-get update && \
     git \
     python3 \
     python3-pip \
-    systemctl \
-    systemd \
     iptables \
     iproute2 \
     net-tools \
