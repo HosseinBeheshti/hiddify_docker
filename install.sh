@@ -194,7 +194,7 @@ sleep 15
 
 # Wait for hiddify-manager container to be running
 print_message "Waiting for Hiddify Manager to be ready..."
-MAX_WAIT=60
+MAX_WAIT=120
 COUNTER=0
 while [ $COUNTER -lt $MAX_WAIT ]; do
     if docker compose ps hiddify | grep -q "Up"; then
@@ -209,19 +209,30 @@ if [ $COUNTER -ge $MAX_WAIT ]; then
     print_warning "Hiddify Manager took longer than expected to start"
 fi
 
-# Wait a bit more for the web service to be ready
-sleep 10
+# Wait for panel to generate the current.json file with panel links
+print_message "Waiting for Hiddify Panel to initialize..."
+MAX_WAIT=60
+COUNTER=0
+while [ $COUNTER -lt $MAX_WAIT ]; do
+    if docker compose exec -T hiddify test -f /opt/hiddify-manager/current.json 2>/dev/null; then
+        print_message "Panel configuration ready!"
+        break
+    fi
+    sleep 3
+    COUNTER=$((COUNTER+3))
+done
 
 # Show status
 print_message "Checking container status..."
 docker compose ps
 
-# Show logs
-print_message "Recent logs:"
-docker compose logs --tail=50
+# Get panel links from current.json
+PANEL_LINKS=""
+if docker compose exec -T hiddify test -f /opt/hiddify-manager/current.json 2>/dev/null; then
+    PANEL_LINKS=$(docker compose exec -T hiddify cat /opt/hiddify-manager/current.json 2>/dev/null | jq -r '.panel_links[]' 2>/dev/null | grep -v "^\[" || true)
+fi
 
-# Get server public IP
-print_message "Getting server public IP address..."
+# Get server public IP as fallback
 SERVER_IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || curl -s --max-time 5 icanhazip.com 2>/dev/null || curl -s --max-time 5 api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')
 
 echo ""
@@ -229,13 +240,25 @@ echo "========================================"
 echo -e "${GREEN}Installation Complete!${NC}"
 echo "========================================"
 echo ""
-echo -e "${GREEN}Access Hiddify Panel at:${NC}"
-echo -e "  ${GREEN}http://${SERVER_IP}${NC}"
-echo ""
-echo "Alternative access methods:"
-echo "  https://$SERVER_IP (if HTTPS is configured)"
+
+if [ ! -z "$PANEL_LINKS" ]; then
+    echo -e "${GREEN}Access Hiddify Panel at:${NC}"
+    echo "$PANEL_LINKS" | while read -r link; do
+        if [ ! -z "$link" ]; then
+            echo -e "  ${GREEN}${link}${NC}"
+        fi
+    done
+    echo ""
+else
+    echo -e "${GREEN}Access Hiddify Panel at:${NC}"
+    echo -e "  ${GREEN}http://${SERVER_IP}/${NC}"
+    echo ""
+    print_warning "Panel links not yet available. Check logs: docker compose logs hiddify"
+fi
+
+echo "Alternative access (if different):"
 if [ "$SERVER_IP" != "$(hostname -I | awk '{print $1}')" ]; then
-    echo "  http://$(hostname -I | awk '{print $1}') (local IP)"
+    echo "  http://$(hostname -I | awk '{print $1}')"
 fi
 echo ""
 echo "Installation directory: $INSTALL_DIR"
