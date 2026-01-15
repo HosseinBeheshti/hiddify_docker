@@ -9,12 +9,23 @@ echo "========================================"
 # Remove any lock files
 rm -rf /opt/hiddify-manager/log/*.lock
 mkdir -p /opt/hiddify-manager/log/system/
+mkdir -p /var/log/nginx
+
+# Ensure proper permissions for all directories
+chown -R root:root /opt/hiddify-manager
+chmod -R 755 /opt/hiddify-manager
+mkdir -p /opt/hiddify-manager/hiddify-panel
+chmod 755 /opt/hiddify-manager/hiddify-panel
 
 # Change to Hiddify directory
 cd /opt/hiddify-manager
 
-# Activate Python virtual environment
-source /opt/hiddify-manager/.venv313/bin/activate
+# Activate Python virtual environment if it exists
+if [ -f "/opt/hiddify-manager/.venv313/bin/activate" ]; then
+    source /opt/hiddify-manager/.venv313/bin/activate
+elif [ -f "/opt/hiddify-manager/.venv/bin/activate" ]; then
+    source /opt/hiddify-manager/.venv/bin/activate
+fi
 
 # Export environment variables
 export LANG=C.UTF-8
@@ -38,31 +49,34 @@ sleep 15
 # Configure hiddify-panel app.cfg
 echo "Configuring hiddify-panel..."
 
-# Fix ownership of hiddify-panel directory
-chown -R root:root /opt/hiddify-manager/hiddify-panel 2>/dev/null || true
-
-# Create config directly
+# Create config file
 cat > /opt/hiddify-manager/hiddify-panel/app.cfg <<EOF
 SQLALCHEMY_DATABASE_URI ='${SQLALCHEMY_DATABASE_URI}'
 REDIS_URI_MAIN = '${REDIS_URI_MAIN}'
 REDIS_URI_SSH = '${REDIS_URI_SSH}'
 EOF
 
-chmod 600 /opt/hiddify-manager/hiddify-panel/app.cfg
+chmod 644 /opt/hiddify-manager/hiddify-panel/app.cfg
 
-# Initialize database (requires hiddify-panel-cli to be available)
-echo "Initializing database..."
-cd /opt/hiddify-manager/hiddify-panel
-if command -v hiddify-panel-cli &> /dev/null; then
-    hiddify-panel-cli init-db 2>&1 || true
+# Initialize database - Run the actual Hiddify initialization script
+echo "Running Hiddify initialization..."
+cd /opt/hiddify-manager
+if [ -f "install.sh" ]; then
+    bash install.sh --no-gui --docker 2>&1 || true
+elif [ -f "common/hiddify_installer.sh" ]; then
+    bash common/hiddify_installer.sh docker --no-gui 2>&1 || true
+fi
+
+# Check if nginx config exists now
+if [ ! -f "/opt/hiddify-manager/nginx/nginx.conf" ]; then
+    echo "ERROR: Nginx config not found after initialization!"
+    echo "Listing /opt/hiddify-manager/nginx directory:"
+    ls -la /opt/hiddify-manager/nginx/ 2>&1 || echo "nginx directory does not exist"
+    exit 1
 fi
 
 # Start Nginx
 echo "Starting Nginx..."
-cd /opt/hiddify-manager/nginx
-if [ -f "pre-start.sh" ]; then
-    bash pre-start.sh 2>&1 || true
-fi
 /usr/sbin/nginx -c /opt/hiddify-manager/nginx/nginx.conf 2>&1 &
 NGINX_PID=$!
 
