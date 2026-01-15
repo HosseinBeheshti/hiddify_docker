@@ -111,27 +111,43 @@ sudo chown -R $USER:$USER $INSTALL_DIR 2>/dev/null || sudo chown -R $SUDO_USER:$
 
 cd $INSTALL_DIR
 
-# Download Hiddify Docker files
-print_message "Downloading Hiddify Docker configuration files..."
+# Copy Hiddify Docker files from current directory
+print_message "Copying Hiddify Docker configuration files..."
 
-# Download Dockerfile
-curl -fsSL -o Dockerfile https://raw.githubusercontent.com/HosseinBeheshti/private_scripts/main/hiddify_docker/Dockerfile || {
-    print_warning "Could not download from repository, creating files manually..."
-    
-    # If download fails, ask user to provide files
-    print_error "Please copy the following files to $INSTALL_DIR:"
-    print_error "  - Dockerfile"
-    print_error "  - docker-compose.yml"
-    print_error "  - docker-entrypoint.sh"
-    print_error "  - docker.env"
+# Get the directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Copy required files to installation directory
+if [ -f "$SCRIPT_DIR/Dockerfile" ]; then
+    cp "$SCRIPT_DIR/Dockerfile" .
+else
+    print_error "Dockerfile not found in $SCRIPT_DIR"
     exit 1
-}
+fi
 
-curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/HosseinBeheshti/private_scripts/main/hiddify_docker/docker-compose.yml
-curl -fsSL -o docker-entrypoint.sh https://raw.githubusercontent.com/HosseinBeheshti/private_scripts/main/hiddify_docker/docker-entrypoint.sh
-curl -fsSL -o docker.env https://raw.githubusercontent.com/HosseinBeheshti/private_scripts/main/hiddify_docker/docker.env
+if [ -f "$SCRIPT_DIR/docker-compose.yml" ]; then
+    cp "$SCRIPT_DIR/docker-compose.yml" .
+else
+    print_error "docker-compose.yml not found in $SCRIPT_DIR"
+    exit 1
+fi
 
-chmod +x docker-entrypoint.sh
+if [ -f "$SCRIPT_DIR/docker-entrypoint.sh" ]; then
+    cp "$SCRIPT_DIR/docker-entrypoint.sh" .
+    chmod +x docker-entrypoint.sh
+else
+    print_error "docker-entrypoint.sh not found in $SCRIPT_DIR"
+    exit 1
+fi
+
+if [ -f "$SCRIPT_DIR/docker.env" ]; then
+    cp "$SCRIPT_DIR/docker.env" .
+else
+    print_error "docker.env not found in $SCRIPT_DIR"
+    exit 1
+fi
+
+print_message "All configuration files copied successfully"
 
 # Generate strong passwords
 print_message "Generating secure passwords..."
