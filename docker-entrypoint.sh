@@ -35,26 +35,20 @@ echo "Waiting for database and redis to be ready..."
 sleep 15
 
 # Configure hiddify-panel app.cfg
-cd /opt/hiddify-manager/hiddify-panel
-
 echo "Configuring hiddify-panel..."
 
-# Fix ownership if needed (app.cfg might be owned by hiddify-panel user)
-if [ -f app.cfg ]; then
-    chmod 600 app.cfg 2>/dev/null || true
-else
-    touch app.cfg 2>/dev/null || echo "" > app.cfg
-    chmod 600 app.cfg 2>/dev/null || true
-fi
+# Create config in temp location first (to avoid permission issues)
+TMP_CONFIG="/tmp/app.cfg.tmp"
+cat > "$TMP_CONFIG" <<EOF
+SQLALCHEMY_DATABASE_URI ='${SQLALCHEMY_DATABASE_URI}'
+REDIS_URI_MAIN = '${REDIS_URI_MAIN}'
+REDIS_URI_SSH = '${REDIS_URI_SSH}'
+EOF
 
-# Remove old config lines
-sed -i '/^SQLALCHEMY_DATABASE_URI/d' app.cfg
-sed -i '/^REDIS_URI/d' app.cfg
-
-# Add new config
-echo "SQLALCHEMY_DATABASE_URI ='${SQLALCHEMY_DATABASE_URI}'" >> app.cfg
-echo "REDIS_URI_MAIN = '${REDIS_URI_MAIN}'" >> app.cfg
-echo "REDIS_URI_SSH = '${REDIS_URI_SSH}'" >> app.cfg
+# Copy to the hiddify-panel directory
+cp "$TMP_CONFIG" /opt/hiddify-manager/hiddify-panel/app.cfg
+chmod 600 /opt/hiddify-manager/hiddify-panel/app.cfg
+rm -f "$TMP_CONFIG"
 
 # Initialize database (requires hiddify-panel-cli to be available)
 echo "Initializing database..."
