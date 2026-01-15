@@ -245,21 +245,33 @@ if [ ! -z "$PANEL_LINKS" ]; then
     echo -e "${GREEN}Access Hiddify Panel at:${NC}"
     echo "$PANEL_LINKS" | while read -r link; do
         if [ ! -z "$link" ]; then
-            echo -e "  ${GREEN}${link}${NC}"
+            # Ensure the link uses the correct public IP
+            # If the link doesn't contain a valid public IP (e.g. localhost or internal IP), try to construct one
+            if [[ "$link" == *"localhost"* ]] || [[ "$link" == *"127.0.0.1"* ]]; then
+                 UPDATED_LINK="${link/localhost/$SERVER_IP}"
+                 UPDATED_LINK="${UPDATED_LINK/127.0.0.1/$SERVER_IP}"
+                 echo -e "  ${GREEN}${UPDATED_LINK}${NC}"
+            else
+                 echo -e "  ${GREEN}${link}${NC}"
+            fi
         fi
     done
     echo ""
 else
     echo -e "${GREEN}Access Hiddify Panel at:${NC}"
+    # Construct a link that is more likely to work for remote access
     echo -e "  ${GREEN}http://${SERVER_IP}/${NC}"
     echo ""
-    print_warning "Panel links not yet available. Check logs: docker compose logs hiddify"
+    print_warning "Panel links not yet available. Check logs: cd /opt/hiddify-docker && docker compose logs hiddify"
 fi
 
-echo "Alternative access (if different):"
-if [ "$SERVER_IP" != "$(hostname -I | awk '{print $1}')" ]; then
-    echo "  http://$(hostname -I | awk '{print $1}')"
-fi
+echo "Internal/Private Network Access:"
+# Show all detected IPs
+hostname -I | tr ' ' '\n' | while read ip; do
+    if [ ! -z "$ip" ]; then
+         echo "  http://$ip/"
+    fi
+done
 echo ""
 echo "Installation directory: $INSTALL_DIR"
 echo "Configuration file: $INSTALL_DIR/docker.env"
