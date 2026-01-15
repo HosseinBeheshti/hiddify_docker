@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e
+# Don't exit on error - we need to handle permissions gracefully
+set +e
 
 echo "========================================"
 echo "Starting Hiddify Manager Docker Container"
@@ -37,18 +38,17 @@ sleep 15
 # Configure hiddify-panel app.cfg
 echo "Configuring hiddify-panel..."
 
-# Create config in temp location first (to avoid permission issues)
-TMP_CONFIG="/tmp/app.cfg.tmp"
-cat > "$TMP_CONFIG" <<EOF
+# Fix ownership of hiddify-panel directory
+chown -R root:root /opt/hiddify-manager/hiddify-panel 2>/dev/null || true
+
+# Create config directly
+cat > /opt/hiddify-manager/hiddify-panel/app.cfg <<EOF
 SQLALCHEMY_DATABASE_URI ='${SQLALCHEMY_DATABASE_URI}'
 REDIS_URI_MAIN = '${REDIS_URI_MAIN}'
 REDIS_URI_SSH = '${REDIS_URI_SSH}'
 EOF
 
-# Copy to the hiddify-panel directory
-cp "$TMP_CONFIG" /opt/hiddify-manager/hiddify-panel/app.cfg
 chmod 600 /opt/hiddify-manager/hiddify-panel/app.cfg
-rm -f "$TMP_CONFIG"
 
 # Initialize database (requires hiddify-panel-cli to be available)
 echo "Initializing database..."
