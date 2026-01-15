@@ -38,8 +38,14 @@ sleep 15
 cd /opt/hiddify-manager/hiddify-panel
 
 echo "Configuring hiddify-panel..."
-touch app.cfg
-chmod 600 app.cfg
+
+# Fix ownership if needed (app.cfg might be owned by hiddify-panel user)
+if [ -f app.cfg ]; then
+    chmod 600 app.cfg 2>/dev/null || true
+else
+    touch app.cfg 2>/dev/null || echo "" > app.cfg
+    chmod 600 app.cfg 2>/dev/null || true
+fi
 
 # Remove old config lines
 sed -i '/^SQLALCHEMY_DATABASE_URI/d' app.cfg

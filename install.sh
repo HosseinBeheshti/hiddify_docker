@@ -190,6 +190,26 @@ docker compose up -d
 
 # Wait for services to be healthy
 print_message "Waiting for services to start..."
+sleep 15
+
+# Wait for hiddify-manager container to be running
+print_message "Waiting for Hiddify Manager to be ready..."
+MAX_WAIT=60
+COUNTER=0
+while [ $COUNTER -lt $MAX_WAIT ]; do
+    if docker compose ps hiddify | grep -q "Up"; then
+        print_message "Hiddify Manager container is running!"
+        break
+    fi
+    sleep 2
+    COUNTER=$((COUNTER+2))
+done
+
+if [ $COUNTER -ge $MAX_WAIT ]; then
+    print_warning "Hiddify Manager took longer than expected to start"
+fi
+
+# Wait a bit more for the web service to be ready
 sleep 10
 
 # Show status
@@ -200,18 +220,23 @@ docker compose ps
 print_message "Recent logs:"
 docker compose logs --tail=50
 
-# Get server IP
-SERVER_IP=$(curl -s ifconfig.me || curl -s icanhazip.com || hostname -I | awk '{print $1}')
+# Get server public IP
+print_message "Getting server public IP address..."
+SERVER_IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || curl -s --max-time 5 icanhazip.com 2>/dev/null || curl -s --max-time 5 api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')
 
 echo ""
 echo "========================================"
 echo -e "${GREEN}Installation Complete!${NC}"
 echo "========================================"
 echo ""
-echo "Access Hiddify Manager at:"
-echo "  http://$SERVER_IP"
-echo "  or"
-echo "  https://$SERVER_IP"
+echo -e "${GREEN}Access Hiddify Panel at:${NC}"
+echo -e "  ${GREEN}http://${SERVER_IP}${NC}"
+echo ""
+echo "Alternative access methods:"
+echo "  https://$SERVER_IP (if HTTPS is configured)"
+if [ "$SERVER_IP" != "$(hostname -I | awk '{print $1}')" ]; then
+    echo "  http://$(hostname -I | awk '{print $1}') (local IP)"
+fi
 echo ""
 echo "Installation directory: $INSTALL_DIR"
 echo "Configuration file: $INSTALL_DIR/docker.env"
