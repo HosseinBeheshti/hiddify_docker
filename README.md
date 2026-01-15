@@ -110,10 +110,10 @@ docker compose ps
 docker compose logs --tail=100
 
 # View logs for specific service
-docker compose logs -f hiddify-manager
+docker compose logs -f hiddify
 
 # Find Hiddify panel URL and admin credentials
-docker compose logs hiddify-manager | grep -i "admin\|panel\|url\|http"
+docker compose logs hiddify | grep -i "admin\|panel\|url\|http"
 
 # View live logs
 docker compose logs -f
@@ -128,7 +128,7 @@ docker compose start
 docker compose restart
 
 # Access shell in hiddify container
-docker compose exec hiddify-manager bash
+docker compose exec hiddify bash
 
 # Stop and remove containers (keeps data)
 docker compose down
@@ -184,7 +184,7 @@ docker compose up -d
 cd /opt/hiddify-docker
 
 # Check logs
-docker compose logs hiddify-manager
+docker compose logs hiddify
 
 # Check if ports are in use
 sudo netstat -tulpn | grep -E ':(80|443)'
@@ -218,7 +218,7 @@ docker compose logs mariadb
 docker compose restart mariadb
 
 # Verify environment variables
-docker compose exec hiddify-manager env | grep -E '(MYSQL|REDIS)'
+docker compose exec hiddify env | grep -E '(MYSQL|REDIS)'
 ```
 
 ### Reset everything
