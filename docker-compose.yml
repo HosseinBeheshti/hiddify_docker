@@ -11,10 +11,14 @@ services:
       - "80:80"
       - "443:443"
     
-    # Security: Limited capabilities instead of privileged
+    # Security: Limited capabilities but allow necessary operations
     cap_add:
       - NET_ADMIN
       - NET_RAW
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
     cap_drop:
       - ALL
     
@@ -22,9 +26,9 @@ services:
     # Commented out as it may cause issues with some operations
     # read_only: true
     
-    # Security: Prevent privilege escalation
-    security_opt:
-      - no-new-privileges:true
+    # Security: Prevent privilege escalation (Commented out as it breaks sudo/setuid needed by install scripts)
+    # security_opt:
+    #   - no-new-privileges:true
     
     # Resource limits to prevent container from consuming all host resources
     deploy:

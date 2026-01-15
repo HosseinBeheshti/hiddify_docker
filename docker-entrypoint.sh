@@ -103,13 +103,15 @@ sleep 5
 
 # Get server IP
 SERVER_IP=$(hostname -I | awk '{print $1}' || echo "localhost")
+PUBLIC_IP=$(curl -s https://api.ipify.org || echo "Unknown")
 
 echo "========================================"
 echo "Hiddify Manager Started!"
 echo "========================================"
 echo ""
 echo "Access Panel at:"
-echo "  http://${SERVER_IP}/"
+echo "  http://${PUBLIC_IP}/"
+echo "  (Container IP: ${SERVER_IP})"
 echo ""
 echo "Panel PID: $PANEL_PID"
 echo "Background PID: $BACKGROUND_PID"
