@@ -100,11 +100,23 @@ Open your browser and navigate to:
 ## Management Commands
 
 ```bash
-# View logs
-docker compose logs -f
+# Go to installation directory
+cd /opt/hiddify-docker
+
+# Check container status
+docker compose ps
+
+# View all logs
+docker compose logs --tail=100
 
 # View logs for specific service
-docker compose logs -f hiddify
+docker compose logs -f hiddify-manager
+
+# Find Hiddify panel URL and admin credentials
+docker compose logs hiddify-manager | grep -i "admin\|panel\|url\|http"
+
+# View live logs
+docker compose logs -f
 
 # Stop services
 docker compose stop
@@ -115,11 +127,8 @@ docker compose start
 # Restart services
 docker compose restart
 
-# Check status
-docker compose ps
-
 # Access shell in hiddify container
-docker compose exec hiddify bash
+docker compose exec hiddify-manager bash
 
 # Stop and remove containers (keeps data)
 docker compose down
@@ -171,8 +180,11 @@ docker compose up -d
 ### Container fails to start
 
 ```bash
+# Go to installation directory
+cd /opt/hiddify-docker
+
 # Check logs
-docker compose logs hiddify
+docker compose logs hiddify-manager
 
 # Check if ports are in use
 sudo netstat -tulpn | grep -E ':(80|443)'
@@ -206,7 +218,7 @@ docker compose logs mariadb
 docker compose restart mariadb
 
 # Verify environment variables
-docker compose exec hiddify env | grep -E '(MYSQL|REDIS)'
+docker compose exec hiddify-manager env | grep -E '(MYSQL|REDIS)'
 ```
 
 ### Reset everything
