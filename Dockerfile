@@ -23,18 +23,10 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Clone Hiddify Manager repository (latest release)
-RUN curl -sSL https://i.hiddify.com/release | bash -s -- --no-gui || true
-
-# Verify installation and get the actual installation directory
-RUN if [ ! -d "/opt/hiddify-manager" ]; then \
-        echo "ERROR: Hiddify Manager not installed in expected location" && \
-        exit 1; \
-    fi
-
-# Update submodules if needed
-RUN cd /opt/hiddify-manager && \
-    git submodule update --init --recursive || true
+# Download and install Hiddify Manager (latest release)
+RUN bash -c 'curl -sSL https://raw.githubusercontent.com/hiddify/Hiddify-Manager/refs/heads/main/common/download.sh | bash -s -- release' && \
+    cd /opt/hiddify-manager && \
+    git submodule update --init --recursive
 
 # Install uv (Python package installer required by Hiddify)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
