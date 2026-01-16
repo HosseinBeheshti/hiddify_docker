@@ -1,126 +1,111 @@
-# Hiddify Manager Docker Setup
+# Hiddify Manager Docker
 
-Complete Docker setup for Hiddify Manager with external MariaDB and Redis.
+Dockerized deployment of Hiddify Manager with MariaDB and Redis.
 
-## Quick Start
+## Installation
 
-1. **Clone and prepare:**
-   ```bash
-   git clone <your-repo-url>
-   cd hiddify_docker
-   ```
+### Method 1: Automated Setup (Recommended)
 
-2. **Configure passwords:**
-   Edit `docker.env` and set strong passwords:
-   ```bash
-   REDIS_PASSWORD=your_strong_redis_password_here
-   MYSQL_PASSWORD=your_strong_mysql_password_here
-   MYSQL_ROOT_PASSWORD=your_strong_root_password_here
-   MYSQL_DATABASE=hiddifypanel
-   MYSQL_USER=hiddifypanel
-   ```
+**On a fresh Ubuntu/Debian VPS:**
 
-3. **Build and start:**
-   ```bash
-   docker compose build --no-cache
-   docker compose up -d
-   ```
-
-4. **Check logs:**
-   ```bash
-   docker compose logs -f hiddify
-   ```
-
-5. **Access panel:**
-   Wait 2-3 minutes for initialization, then access via:
-   - `http://YOUR_SERVER_IP/`
-   - Check logs for admin URL with credentials
-
-## Management Commands
-
-**View logs:**
 ```bash
-# All services
-docker compose logs -f
+# Clone repository
+git clone https://github.com/HosseinBeheshti/hiddify_docker.git
+cd hiddify_docker
 
-# Specific service
-docker compose logs -f hiddify
-docker compose logs -f mariadb
-docker compose logs -f redis
+# Install Docker and dependencies
+sudo bash setup_server.sh
+
+# Build and deploy (generates passwords automatically)
+sudo bash setup_docker.sh
 ```
 
-**Restart services:**
+**Access your panel at the URL shown after installation completes (typically http://YOUR_SERVER_IP/)**
+
+### Method 2: Manual Setup
+
 ```bash
-# All services
+# 1. Clone repository
+git clone https://github.com/HosseinBeheshti/hiddify_docker.git
+cd hiddify_docker
+
+# 2. Build and start (passwords will be generated automatically)
+docker compose build --no-cache
+docker compose up -d
+
+# 3. Access panel at http://YOUR_SERVER_IP/
+```
+
+**Note:** Setup scripts automatically generate secure passwords. Check `docker.env` for generated credentials if needed.
+
+## Management
+
+```bash
+# View logs
+docker compose logs -f hiddify
+
+# Restart services
 docker compose restart
 
-# Specific service
-docker compose restart hiddify
-```
+# Stop/start
+docker compose stop
+docker compose start
 
-**Stop everything:**
-```bash
-docker compose down
-```
-
-**Complete reset (WARNING: deletes all data):**
-```bash
-docker compose down -v
-rm -rf docker-data
-docker compose up -d
-```
-
-**Check service status:**
-```bash
-docker compose ps
-```
-
-**Execute commands in container:**
-```bash
+# Access container shell
 docker compose exec hiddify bash
+
+# Check service status inside container
+docker compose exec hiddify systemctl status hiddify-panel
+docker compose exec hiddify systemctl status hiddify-nginx
 ```
 
 ## Troubleshooting
 
-**Container exits immediately:**
-```bash
-docker compose logs hiddify
-```
-Check for database connection errors or missing environment variables.
+**Panel not accessible:**
+- Wait 2-3 minutes for initialization
+- Check logs: `docker compose logs hiddify`
+- Verify ports 80/443 are open: `sudo ufw status`
 
-**Database errors:**
+**Services failing:**
 ```bash
-# Check MariaDB logs
+# Check service status
+docker compose exec hiddify systemctl status hiddify-panel
+docker compose exec hiddify systemctl status hiddify-nginx
+
+# View error logs
+docker compose exec hiddify tail -f /opt/hiddify-manager/log/system/hiddify_panel.err.log
+```
+
+**Database connection issues:**
+```bash
+# Check MariaDB status
 docker compose logs mariadb
 
-# Recreate database
-docker compose down
-docker volume rm hiddify_docker_mariadb_data
-docker compose up -d
+# Test connection inside container
+docker compose exec hiddify mysql -h mariadb -u hiddifypanel -p
 ```
 
-**Can't access panel:**
-- Wait 2-3 minutes for full initialization
-- Check firewall: ports 80 and 443 must be open
-- Check logs: `docker compose logs hiddify`
+**Complete reinstall (deletes all data):**
+```bash
+# Run setup script again - it will clean everything
+sudo bash setup_docker.sh
+```
 
-**Need to change passwords:**
-1. Stop containers: `docker compose down`
-2. Edit `docker.env`
-3. Remove volumes: `docker volume rm hiddify_docker_mariadb_data hiddify_docker_redis_data`
-4. Start fresh: `docker compose up -d`
+## Components
 
-## Architecture
+- **hiddify-manager**: Main application (Nginx, HAProxy, Xray, Singbox, Flask Panel)
+- **mariadb**: Database server (MariaDB 11.2)
+- **redis**: Cache and session store (Redis 7.2)
 
-- **hiddify**: Main Hiddify Manager container (Nginx, HAProxy, Xray/Singbox, Panel)
-- **mariadb**: MySQL database (persistent data in volume)
-- **redis**: Cache and session storage (persistent data in volume)
+Network: `172.28.0.0/16` bridge
+Data: Stored in `./docker-data/` directory
 
-All containers are isolated on custom bridge network `172.28.0.0/16`.
+## Files
 
-## Security Notes
-
-- Change default passwords in `docker.env` before deployment
-- Only ports 80 and 443 are exposed
-- Containers run with minimal required capabilities
-- All data stored in Docker volumes (backed up automatically)
+- `setup_server.sh`: Installs Docker and system dependencies
+- `setup_docker.sh`: Builds and deploys containers (generates passwords)
+- `docker-compose.yml`: Service orchestration
+- `Dockerfile`: Hiddify Manager image build
+- `docker-entrypoint.sh`: Container initialization script
+- `docker.env`: Environment variables (passwords auto-generated)
+- `init-db.sh`: Database initialization script
