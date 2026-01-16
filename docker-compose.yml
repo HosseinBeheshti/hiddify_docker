@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   hiddify:
     build:
@@ -13,10 +11,14 @@ services:
       - "80:80"
       - "443:443"
     
-    # Security: Limited capabilities instead of privileged
+    # Security: Limited capabilities but allow necessary operations
     cap_add:
       - NET_ADMIN
       - NET_RAW
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
     cap_drop:
       - ALL
     
@@ -24,18 +26,18 @@ services:
     # Commented out as it may cause issues with some operations
     # read_only: true
     
-    # Security: Prevent privilege escalation
-    security_opt:
-      - no-new-privileges:true
+    # Security: Prevent privilege escalation (Commented out as it breaks sudo/setuid needed by install scripts)
+    # security_opt:
+    #   - no-new-privileges:true
     
     # Resource limits to prevent container from consuming all host resources
     deploy:
       resources:
         limits:
-          cpus: '4'
-          memory: 4G
+          cpus: '1.5'
+          memory: 2G
         reservations:
-          cpus: '1'
+          cpus: '0.5'
           memory: 512M
     
     # Volumes - strictly limited to specific paths
@@ -84,30 +86,27 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 2G
+          cpus: '0.3'
+          memory: 1G
         reservations:
-          cpus: '0.5'
+          cpus: '0.1'
           memory: 256M
     
     # Environment
     env_file:
       - ./docker.env
-    environment:
-      MARIADB_RANDOM_ROOT_PASSWORD: 1
-      MYSQL_DATABASE: hiddifypanel
-      MYSQL_USER: hiddifypanel
     
     # Volumes - database data isolated
     volumes:
       - ./docker-data/mariadb:/var/lib/mysql:rw
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     
-    # Healthcheck
+    # Healthcheck - simple ping (init script will run after this passes)
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
       start_period: 30s
 
   redis:
@@ -123,10 +122,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: '0.2'
           memory: 512M
         reservations:
-          cpus: '0.25'
+          cpus: '0.1'
           memory: 128M
     
     # Environment
