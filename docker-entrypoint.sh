@@ -54,6 +54,7 @@ DEBUG=False
 # Hiddify Configuration
 MODE='docker'
 COMMIT_SHA='docker-build'
+HIDDIFY_CONFIG_PATH='/opt/hiddify-manager'
 EOF
 
 chmod 644 /opt/hiddify-manager/hiddify-panel/app.cfg || true
