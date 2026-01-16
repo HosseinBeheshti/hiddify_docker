@@ -36,9 +36,24 @@ rm -rf /opt/hiddify-manager/log/*.lock 2>/dev/null || true
 # Create app.cfg with database configuration BEFORE anything else
 echo "Creating app.cfg configuration..."
 cat > /opt/hiddify-manager/hiddify-panel/app.cfg <<EOF
+# Redis Configuration
 REDIS_URI_MAIN='${REDIS_URI_MAIN}'
 REDIS_URI_SSH='${REDIS_URI_SSH}'
+
+# Database Configuration
 SQLALCHEMY_DATABASE_URI='${SQLALCHEMY_DATABASE_URI}'
+
+# Logging Configuration
+STDOUT_LOG_LEVEL='INFO'
+FILE_LOG_LEVEL='DEBUG'
+
+# Flask Configuration
+SECRET_KEY='$(openssl rand -hex 32)'
+DEBUG=False
+
+# Hiddify Configuration
+MODE='docker'
+COMMIT_SHA='docker-build'
 EOF
 
 chmod 644 /opt/hiddify-manager/hiddify-panel/app.cfg || true
