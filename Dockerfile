@@ -16,11 +16,12 @@ RUN apt-get update && \
         python3 python3-pip python3-venv python3-dev \
         build-essential libssl-dev pkg-config libev-dev libevdev2 \
         default-libmysqlclient-dev \
-        redis-tools mysql-client mariadb-client \
+        redis-tools mariadb-client \
         nginx cron sudo \
         iproute2 iptables jq locales lsb-release gnupg2 \
         software-properties-common && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Clone Hiddify Manager repository
 RUN git clone https://github.com/hiddify/Hiddify-Manager.git /opt/hiddify-manager && \

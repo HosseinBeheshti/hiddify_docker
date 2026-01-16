@@ -109,9 +109,15 @@ mkdir -p docker-data/{hiddify,mariadb,redis,logs,tmp}
 chmod 700 docker-data/mariadb
 chmod 700 docker-data/redis
 
+# Clean up old Docker images and containers
+print_message "Cleaning up old Docker images and containers..."
+docker compose down -v 2>/dev/null || true
+docker rmi hiddify-docker-hiddify 2>/dev/null || true
+docker system prune -f 2>/dev/null || true
+
 # Build and start containers
 print_message "Building Docker image (this may take several minutes)..."
-docker compose build
+docker compose build --no-cache
 
 print_message "Starting Hiddify Manager..."
 docker compose up -d
