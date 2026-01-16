@@ -103,9 +103,9 @@ print_message "Generating secure passwords..."
 REDIS_PASS=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
 MYSQL_PASS=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
 
-# Update docker.env with generated passwords
+# Update docker.env with generated passwords (replace both MYSQL_ROOT_PASSWORD and MYSQL_PASSWORD)
 sed -i "s/CHANGE_THIS_TO_STRONG_REDIS_PASSWORD/$REDIS_PASS/" docker.env
-sed -i "s/CHANGE_THIS_TO_STRONG_MYSQL_PASSWORD/$MYSQL_PASS/" docker.env
+sed -i "s/CHANGE_THIS_TO_STRONG_MYSQL_PASSWORD/$MYSQL_PASS/g" docker.env
 
 print_message "Generated passwords saved in docker.env"
 

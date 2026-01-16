@@ -1,22 +1,19 @@
 #!/bin/bash
 set -e
 
-echo "Initializing Hiddify Panel database..."
+echo "Initializing Hiddify Panel database and user..."
 
-# MariaDB official image will create the database automatically from MYSQL_DATABASE env var
-# We just need to grant proper privileges to the user
+# This script runs automatically when MariaDB container starts for the first time
+# All environment variables from docker.env are available here
 
-# Wait a moment for MariaDB to be fully ready
-sleep 2
+# The MariaDB official image automatically:
+# - Sets root password to MYSQL_PASSWORD (we'll use it as both root and user password)
+# - Creates MYSQL_DATABASE if set
+# - Creates MYSQL_USER with MYSQL_PASSWORD if both are set
 
-# Grant all privileges to the user
-mysql -u root -p"${MARIADB_ROOT_PASSWORD}" <<-EOSQL
-    CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;
-    CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
-    GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
-    FLUSH PRIVILEGES;
-EOSQL
+# Since we're setting all these variables in docker.env, MariaDB will handle the setup
+# This script just confirms the setup
 
-echo "Database initialized successfully!"
-echo "Database: ${MYSQL_DATABASE}"
-echo "User: ${MYSQL_USER}"
+echo "Database: ${MYSQL_DATABASE:-hiddifypanel}"
+echo "User: ${MYSQL_USER:-hiddifypanel}"
+echo "Database initialization complete!"

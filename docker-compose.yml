@@ -95,24 +95,19 @@ services:
     # Environment
     env_file:
       - ./docker.env
-    environment:
-      MARIADB_ROOT_PASSWORD: "${MYSQL_PASSWORD}"
-      MYSQL_DATABASE: hiddifypanel
-      MYSQL_USER: hiddifypanel
-      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
     
     # Volumes - database data isolated
     volumes:
       - ./docker-data/mariadb:/var/lib/mysql:rw
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     
-    # Healthcheck - ping with authentication
+    # Healthcheck - simple ping (init script will run after this passes)
     healthcheck:
-      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u root -p$$MYSQL_PASSWORD || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 30s
 
   redis:
     image: redis:7.2-alpine
