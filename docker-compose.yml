@@ -104,12 +104,12 @@ services:
     volumes:
       - ./docker-data/mariadb:/var/lib/mysql:rw
     
-    # Healthcheck
+    # Healthcheck - fixed to use mysqladmin with proper credentials
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "hiddifypanel", "-p$$MYSQL_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
       start_period: 30s
 
   redis:
