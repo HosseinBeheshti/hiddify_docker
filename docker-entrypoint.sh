@@ -25,6 +25,10 @@ fi
 
 cd /opt/hiddify-manager
 
+# Setup environment with proper Redis and Database URIs
+export REDIS_URI_MAIN="redis://:${REDIS_PASSWORD}@redis:6379/0"
+export REDIS_URI_SSH="redis://:${REDIS_PASSWORD}@redis:6379/1"
+
 # Create necessary directories
 mkdir -p /hiddify-data/ssl/ /opt/hiddify-manager/log/system/ /opt/hiddify-manager/hiddify-panel
 rm -rf /opt/hiddify-manager/log/*.lock 2>/dev/null || true
@@ -32,10 +36,12 @@ rm -rf /opt/hiddify-manager/log/*.lock 2>/dev/null || true
 # Create app.cfg with database configuration BEFORE anything else
 echo "Creating app.cfg configuration..."
 cat > /opt/hiddify-manager/hiddify-panel/app.cfg <<EOF
-REDIS_URI_MAIN='redis://:${REDIS_PASSWORD}@redis:6379/0'
-REDIS_URI_SSH='redis://:${REDIS_PASSWORD}@redis:6379/1'
+REDIS_URI_MAIN='${REDIS_URI_MAIN}'
+REDIS_URI_SSH='${REDIS_URI_SSH}'
 SQLALCHEMY_DATABASE_URI='${SQLALCHEMY_DATABASE_URI}'
 EOF
+
+chmod 644 /opt/hiddify-manager/hiddify-panel/app.cfg || true
 
 # Check if systemctl wrapper is working properly
 systemctl is-active --quiet hiddify-panel 2>/dev/null || {
