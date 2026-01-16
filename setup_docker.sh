@@ -82,6 +82,14 @@ else
     exit 1
 fi
 
+if [ -f "$SCRIPT_DIR/init-db.sh" ]; then
+    sudo cp "$SCRIPT_DIR/init-db.sh" "$INSTALL_DIR/"
+    sudo chmod +x "$INSTALL_DIR/init-db.sh"
+else
+    print_error "init-db.sh not found in $SCRIPT_DIR"
+    exit 1
+fi
+
 # Set ownership of copied files
 sudo chown -R $USER:$USER $INSTALL_DIR 2>/dev/null || sudo chown -R $SUDO_USER:$SUDO_USER $INSTALL_DIR
 
@@ -111,8 +119,13 @@ chmod 700 docker-data/redis
 
 # Clean up old Docker images and containers
 print_message "Cleaning up old Docker images and containers..."
-docker compose down -v 2>/dev/null || true
+docker compose down -v --remove-orphans 2>/dev/null || true
 docker rmi hiddify-docker-hiddify 2>/dev/null || true
+
+# Clean MariaDB data directory to prevent corruption
+print_message "Cleaning database data directory..."
+rm -rf docker-data/mariadb/* docker-data/redis/* 2>/dev/null || true
+
 docker system prune -f 2>/dev/null || true
 
 # Build and start containers
