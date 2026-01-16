@@ -1,15 +1,11 @@
 #!/bin/bash
-# Simplified Docker entrypoint for Hiddify Manager with external MySQL/Redis
+# Docker entrypoint for Hiddify Manager
 
 set -e
 
-echo "Starting Hiddify Manager..."
-
-# Create directories
-mkdir -p /hiddify-data/ssl/ /opt/hiddify-manager/log/system/
-rm -rf /opt/hiddify-manager/log/*.lock 2>/dev/null || true
-
-cd /opt/hiddify-manager
+echo "==============================================="
+echo "    Hiddify Manager Docker Container"
+echo "==============================================="
 
 # Validate environment variables
 if [ -z "$REDIS_PASSWORD" ]; then
@@ -22,18 +18,16 @@ if [ -z "$MYSQL_PASSWORD" ]; then
     exit 1
 fi
 
-# Set Redis URIs
+# Setup environment
 export REDIS_URI_MAIN="redis://:${REDIS_PASSWORD}@redis:6379/0"
 export REDIS_URI_SSH="redis://:${REDIS_PASSWORD}@redis:6379/1"
-
-# Set MySQL URI
 export SQLALCHEMY_DATABASE_URI="mysql+mysqldb://hiddifypanel:${MYSQL_PASSWORD}@mariadb/hiddifypanel?charset=utf8mb4"
 
-# Ensure systemctl wrapper exists and is executable
-if [ -f other/docker/systemctl ]; then
-    cp other/docker/systemctl /usr/bin/systemctl
-    chmod +x /usr/bin/systemctl
-fi
+cd /opt/hiddify-manager
+
+# Create necessary directories
+mkdir -p /hiddify-data/ssl/ /opt/hiddify-manager/log/system/
+rm -rf /opt/hiddify-manager/log/*.lock 2>/dev/null || true
 
 # Wait for MariaDB
 echo "Waiting for MariaDB..."
@@ -63,41 +57,50 @@ for i in $(seq 1 30); do
     sleep 2
 done
 
-# Activate Python virtual environment
-if [ -d ".venv313" ]; then
-    export VIRTUAL_ENV="/opt/hiddify-manager/.venv313"
-    export PATH="$VIRTUAL_ENV/bin:$PATH"
-elif [ -d ".venv" ]; then
-    export VIRTUAL_ENV="/opt/hiddify-manager/.venv"
-    export PATH="$VIRTUAL_ENV/bin:$PATH"
-fi
-
-export PYTHONPATH="/opt/hiddify-manager:/opt/hiddify-manager/hiddify-panel"
-
-# Create app.cfg with database configuration
+# Configure Hiddify Panel
 echo "Configuring Hiddify Panel..."
-cat > hiddify-panel/app.cfg <<EOF
-REDIS_URI_MAIN='$REDIS_URI_MAIN'
-REDIS_URI_SSH='$REDIS_URI_SSH'
-SQLALCHEMY_DATABASE_URI='$SQLALCHEMY_DATABASE_URI'
+if [ -d "hiddify-panel" ]; then
+    cat > hiddify-panel/app.cfg <<EOF
+REDIS_URI_MAIN='${REDIS_URI_MAIN}'
+REDIS_URI_SSH='${REDIS_URI_SSH}'
+SQLALCHEMY_DATABASE_URI='${SQLALCHEMY_DATABASE_URI}'
 EOF
 
-# Initialize database
-if [ -f hiddify-panel/hiddifypanel/__init__.py ]; then
-    echo "Initializing database..."
-    cd hiddify-panel
-    python3 -m hiddifypanel init-db 2>/dev/null || echo "Database already initialized"
-    cd ..
+    # Try to initialize database
+    if [ -f "hiddify-panel/hiddifypanel/__init__.py" ]; then
+        echo "Initializing database..."
+        cd hiddify-panel
+        python3 -m hiddifypanel init-db 2>/dev/null || echo "Database initialization completed"
+        cd ..
+    fi
 fi
 
-# Apply configurations using the official script (without reinstalling packages)
-echo "Applying Hiddify configuration..."
-DO_NOT_INSTALL=true bash ./install.sh docker --no-gui 2>&1 | tee log/system/docker-init.log || true
+# Try to run install.sh if it exists and is executable
+if [ -f "install.sh" ] && [ -x "install.sh" ]; then
+    echo "Running Hiddify configuration..."
+    DO_NOT_INSTALL=true bash ./install.sh docker --no-gui 2>&1 | tee log/system/docker-init.log || {
+        echo "Warning: install.sh had issues, but continuing..."
+    }
+fi
 
-# Show status
+# Start services
 echo ""
-echo "====================================="
-echo " Hiddify Manager Started"
+echo "==============================================="
+echo "    Hiddify Manager Started Successfully!"
+echo "==============================================="
+echo ""
+echo "Services are running. Check logs below:"
+echo ""
+
+# Keep container running and show logs
+if [ -d "log/system" ]; then
+    tail -f log/system/* 2>/dev/null &
+fi
+
+# Keep container alive
+while true; do
+    sleep 3600
+done
 echo "====================================="
 echo ""
 

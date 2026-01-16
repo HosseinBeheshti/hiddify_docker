@@ -1,8 +1,9 @@
 #!/bin/bash
 
 #############################################
-# Hiddify Manager Docker Installation Script
-# For Fresh Ubuntu Server (20.04/22.04/24.04)
+# Hiddify Manager Docker Setup Script
+# Builds and deploys Hiddify Manager containers
+# Run setup_server.sh first to install Docker
 #############################################
 
 set -e
@@ -26,82 +27,17 @@ print_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
-# Check if running as root
-if [[ $EUID -eq 0 ]]; then
-   print_warning "Running as root. Consider running as a regular user with sudo."
-fi
-
-# Detect OS
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    OS=$NAME
-    VER=$VERSION_ID
-else
-    print_error "Cannot detect OS. This script is for Ubuntu only."
+# Check if Docker is installed
+if ! command -v docker &> /dev/null; then
+    print_error "Docker is not installed. Please run setup_server.sh first."
     exit 1
 fi
 
-if [[ ! "$OS" =~ "Ubuntu" ]]; then
-    print_error "This script is designed for Ubuntu. Detected: $OS"
+# Check if Docker Compose is installed
+if ! docker compose version &> /dev/null; then
+    print_error "Docker Compose is not installed. Please run setup_server.sh first."
     exit 1
 fi
-
-print_message "Detected: $OS $VER"
-
-# Update system
-print_message "Updating system packages..."
-sudo apt-get update
-sudo apt-get upgrade -y
-
-# Install required packages
-print_message "Installing required packages..."
-sudo apt-get install -y \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg \
-    lsb-release \
-    git \
-    ufw
-
-# Install Docker
-print_message "Installing Docker..."
-
-# Remove old Docker installations
-sudo apt-get remove -y docker docker-engine docker.io containerd runc 2>/dev/null || true
-
-# Add Docker's official GPG key
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-# Add Docker repository
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# Install Docker Engine
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-# Start and enable Docker
-sudo systemctl start docker
-sudo systemctl enable docker
-
-# Add current user to docker group
-if [ "$SUDO_USER" ]; then
-    sudo usermod -aG docker $SUDO_USER
-    print_message "Added $SUDO_USER to docker group. You may need to log out and back in."
-elif [ "$USER" != "root" ]; then
-    sudo usermod -aG docker $USER
-    print_message "Added $USER to docker group. You may need to log out and back in."
-fi
-
-# Verify Docker installation
-print_message "Verifying Docker installation..."
-docker --version
-docker compose version
 
 # Get the directory where the script is located (before changing directories)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -173,14 +109,6 @@ mkdir -p docker-data/{hiddify,mariadb,redis,logs,tmp}
 chmod 700 docker-data/mariadb
 chmod 700 docker-data/redis
 
-# Configure firewall
-print_message "Configuring firewall..."
-sudo ufw --force enable
-sudo ufw allow 22/tcp comment 'SSH'
-sudo ufw allow 80/tcp comment 'HTTP'
-sudo ufw allow 443/tcp comment 'HTTPS'
-sudo ufw reload
-
 # Build and start containers
 print_message "Building Docker image (this may take several minutes)..."
 docker compose build
@@ -232,8 +160,8 @@ if docker compose exec -T hiddify test -f /opt/hiddify-manager/current.json 2>/d
     PANEL_LINKS=$(docker compose exec -T hiddify cat /opt/hiddify-manager/current.json 2>/dev/null | jq -r '.panel_links[]' 2>/dev/null | grep -v "^\[" || true)
 fi
 
-# Get server public IP as fallback
-SERVER_IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || curl -s --max-time 5 icanhazip.com 2>/dev/null || curl -s --max-time 5 api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')
+# Get server public IPv4 address (not IPv6)
+SERVER_IP=$(curl -s -4 --max-time 5 ifconfig.me 2>/dev/null || curl -s -4 --max-time 5 icanhazip.com 2>/dev/null || curl -s -4 --max-time 5 api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')
 
 echo ""
 echo "========================================"
@@ -291,5 +219,4 @@ echo "  1. Changing the default admin password in web interface"
 echo "  2. Enabling HTTPS with valid SSL certificate"
 echo "  3. Regular backups: docker-data/ directory"
 echo ""
-print_warning "If you were added to the docker group, log out and back in for permissions to take effect."
 echo "========================================"
