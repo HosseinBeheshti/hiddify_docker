@@ -23,8 +23,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Download and install Hiddify Manager (latest release)
-RUN bash -c 'curl -sSL https://raw.githubusercontent.com/hiddify/Hiddify-Manager/refs/heads/main/common/download.sh | bash -s -- release' && \
+# Clone Hiddify Manager repository
+RUN git clone https://github.com/hiddify/Hiddify-Manager.git /opt/hiddify-manager && \
     cd /opt/hiddify-manager && \
     git submodule update --init --recursive
 
