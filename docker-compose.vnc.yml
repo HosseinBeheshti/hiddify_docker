@@ -1,0 +1,19 @@
+services:
+  ubuntu-vnc:
+    build:
+      context: .
+      dockerfile: Dockerfile.vnc
+    container_name: ubuntu-vnc
+    hostname: ubuntu-vnc
+    network_mode: host  # Uses the same IP as the host server
+    restart: unless-stopped
+    
+    environment:
+      - DISPLAY=:1
+      - USER=vncuser
+    
+    volumes:
+      - ./vnc-home:/home/vncuser
+    
+    stdin_open: true
+    tty: true

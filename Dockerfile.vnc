@@ -1,0 +1,51 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV USER=vncuser
+ENV DISPLAY=:1
+
+# Install TigerVNC and basic desktop environment
+RUN apt-get update && \
+    apt-get install -y \
+        tigervnc-standalone-server \
+        tigervnc-common \
+        xfce4 \
+        xfce4-goodies \
+        dbus-x11 \
+        sudo \
+        wget \
+        curl \
+        vim \
+        nano \
+        firefox \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create VNC user
+RUN useradd -m -s /bin/bash ${USER} && \
+    echo "${USER}:password" | chpasswd && \
+    echo "${USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Create VNC directory
+RUN mkdir -p /home/${USER}/.vnc
+
+# Set VNC password (default: 'vncpass')
+RUN echo "vncpass" | vncpasswd -f > /home/${USER}/.vnc/passwd && \
+    chmod 600 /home/${USER}/.vnc/passwd && \
+    chown -R ${USER}:${USER} /home/${USER}/.vnc
+
+# Create xstartup file
+RUN echo '#!/bin/sh' > /home/${USER}/.vnc/xstartup && \
+    echo 'unset SESSION_MANAGER' >> /home/${USER}/.vnc/xstartup && \
+    echo 'unset DBUS_SESSION_BUS_ADDRESS' >> /home/${USER}/.vnc/xstartup && \
+    echo 'exec startxfce4' >> /home/${USER}/.vnc/xstartup && \
+    chmod +x /home/${USER}/.vnc/xstartup && \
+    chown ${USER}:${USER} /home/${USER}/.vnc/xstartup
+
+USER ${USER}
+WORKDIR /home/${USER}
+
+EXPOSE 5901
+
+CMD ["vncserver", ":1", "-geometry", "1920x1080", "-depth", "24", "-localhost", "no", "-fg"]
