@@ -13,7 +13,7 @@ services:
     environment:
       - DISPLAY=:5
       - USER=hiddifyuser
-      - PASSWORD=hiddifypassword
+      - PASSWORD=mypass
     
     volumes:
       - ./hiddify-home:/home/hiddifyuser
