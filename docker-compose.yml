@@ -25,7 +25,7 @@ services:
       - ALL
     cap_add:
       - CHOWN
-      - DAC_OVERRIDE
+      - DAC_OVERRIDE  # Required to fix volume permissions
       - SETGID
       - SETUID
     security_opt:

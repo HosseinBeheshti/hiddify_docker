@@ -45,31 +45,30 @@ RUN echo '#!/bin/sh' > /home/${USER}/.vnc/xstartup && \
 
 # Create simple entrypoint
 RUN echo '#!/bin/bash' > /usr/local/bin/docker-entrypoint.sh && \
-    echo 'set -e' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '# Fix hostname resolution' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo 'echo "127.0.0.1 $(hostname)" >> /etc/hosts' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'echo "127.0.0.1 $(hostname)" >> /etc/hosts 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '# Fix permissions for mounted volume' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo 'mkdir -p /home/vncuser/.vnc' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo 'chown -R vncuser:vncuser /home/vncuser' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo 'chmod 700 /home/vncuser/.vnc' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'mkdir -p /home/vncuser/.vnc 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'chown -R vncuser:vncuser /home/vncuser 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'chmod 700 /home/vncuser/.vnc 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '# Restore VNC password if missing' >> /usr/local/bin/docker-entrypoint.sh && \
     echo 'if [ ! -f /home/vncuser/.vnc/passwd ]; then' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '  echo "vncpass" | vncpasswd -f > /home/vncuser/.vnc/passwd' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '  chmod 600 /home/vncuser/.vnc/passwd' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '  chown vncuser:vncuser /home/vncuser/.vnc/passwd' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  echo "vncpass" | vncpasswd -f > /home/vncuser/.vnc/passwd 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  chmod 600 /home/vncuser/.vnc/passwd 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  chown vncuser:vncuser /home/vncuser/.vnc/passwd 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
     echo 'fi' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '# Restore xstartup if missing' >> /usr/local/bin/docker-entrypoint.sh && \
     echo 'if [ ! -f /home/vncuser/.vnc/xstartup ]; then' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '  echo "#!/bin/sh" > /home/vncuser/.vnc/xstartup' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '  echo "unset SESSION_MANAGER" >> /home/vncuser/.vnc/xstartup' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '  echo "unset DBUS_SESSION_BUS_ADDRESS" >> /home/vncuser/.vnc/xstartup' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '  echo "exec startxfce4" >> /home/vncuser/.vnc/xstartup' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '  chmod +x /home/vncuser/.vnc/xstartup' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '  chown vncuser:vncuser /home/vncuser/.vnc/xstartup' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  echo "#!/bin/sh" > /home/vncuser/.vnc/xstartup 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  echo "unset SESSION_MANAGER" >> /home/vncuser/.vnc/xstartup 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  echo "unset DBUS_SESSION_BUS_ADDRESS" >> /home/vncuser/.vnc/xstartup 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  echo "exec startxfce4" >> /home/vncuser/.vnc/xstartup 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  chmod +x /home/vncuser/.vnc/xstartup 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  chown vncuser:vncuser /home/vncuser/.vnc/xstartup 2>/dev/null || true' >> /usr/local/bin/docker-entrypoint.sh && \
     echo 'fi' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '# Start VNC as vncuser' >> /usr/local/bin/docker-entrypoint.sh && \
