@@ -4,8 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        USER: ${USER:-hiddifyuser}
-        PASSWORD: ${PASSWORD:-mypass}
+        USER: hiddifyuser
+        PASSWORD: mypass
     container_name: hiddify-docker
     hostname: hiddify-docker
     restart: unless-stopped
@@ -19,7 +19,7 @@ services:
       - PASSWORD=mypass
     
     volumes:
-      - ./hiddify-home:/home/${USER:-hiddifyuser}
+      - ./hiddify-home:/home/hiddifyuser
     
     stdin_open: true
     tty: true
