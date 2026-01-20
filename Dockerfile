@@ -18,7 +18,6 @@ RUN apt-get update && \
         vim \
         nano \
         firefox \
-        iptables \
         && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -44,37 +43,14 @@ RUN echo '#!/bin/sh' > /home/${USER}/.vnc/xstartup && \
     chmod +x /home/${USER}/.vnc/xstartup && \
     chown ${USER}:${USER} /home/${USER}/.vnc/xstartup
 
-# Create firewall script to block localhost access
-RUN echo '#!/bin/bash' > /usr/local/bin/setup-firewall.sh && \
-    echo 'set -e' >> /usr/local/bin/setup-firewall.sh && \
-    echo '' >> /usr/local/bin/setup-firewall.sh && \
-    echo '# Flush existing rules' >> /usr/local/bin/setup-firewall.sh && \
-    echo 'iptables -F OUTPUT 2>/dev/null || true' >> /usr/local/bin/setup-firewall.sh && \
-    echo '' >> /usr/local/bin/setup-firewall.sh && \
-    echo '# Allow loopback for VNC display :5' >> /usr/local/bin/setup-firewall.sh && \
-    echo 'iptables -A OUTPUT -o lo -p tcp --dport 5905 -j ACCEPT' >> /usr/local/bin/setup-firewall.sh && \
-    echo 'iptables -A OUTPUT -o lo -p tcp --dport 6005 -j ACCEPT' >> /usr/local/bin/setup-firewall.sh && \
-    echo '' >> /usr/local/bin/setup-firewall.sh && \
-    echo '# Block access to all other localhost services (IPv4)' >> /usr/local/bin/setup-firewall.sh && \
-    echo 'iptables -A OUTPUT -d 127.0.0.0/8 -j REJECT' >> /usr/local/bin/setup-firewall.sh && \
-    echo '' >> /usr/local/bin/setup-firewall.sh && \
-    echo '# Allow all external traffic (internet)' >> /usr/local/bin/setup-firewall.sh && \
-    echo 'iptables -A OUTPUT -j ACCEPT' >> /usr/local/bin/setup-firewall.sh && \
-    echo '' >> /usr/local/bin/setup-firewall.sh && \
-    echo 'echo "Firewall configured: Localhost blocked (except VNC :5), Internet allowed"' >> /usr/local/bin/setup-firewall.sh && \
-    chmod +x /usr/local/bin/setup-firewall.sh
-
-# Create entrypoint script
+# Create simple entrypoint
 RUN echo '#!/bin/bash' > /usr/local/bin/docker-entrypoint.sh && \
     echo 'set -e' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '# Fix hostname resolution' >> /usr/local/bin/docker-entrypoint.sh && \
     echo 'echo "127.0.0.1 $(hostname)" >> /etc/hosts' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '# Setup firewall (requires NET_ADMIN capability)' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '/usr/local/bin/setup-firewall.sh' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '# Switch to vncuser and start VNC' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '# Start VNC as vncuser' >> /usr/local/bin/docker-entrypoint.sh && \
     echo 'exec su - vncuser -c "vncserver :5 -geometry 1920x1080 -depth 24 -localhost no -fg"' >> /usr/local/bin/docker-entrypoint.sh && \
     chmod +x /usr/local/bin/docker-entrypoint.sh
 

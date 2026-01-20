@@ -5,8 +5,10 @@ services:
       dockerfile: Dockerfile
     container_name: hiddify-docker
     hostname: hiddify-docker
-    network_mode: host  # Same IP as VPS (required for your use case)
     restart: unless-stopped
+    
+    ports:
+      - "5905:5905"  # VPS_IP:5905 -> container:5905
     
     environment:
       - DISPLAY=:5
@@ -26,6 +28,5 @@ services:
       - DAC_OVERRIDE
       - SETGID
       - SETUID
-      - NET_ADMIN  # Required for iptables firewall rules
     security_opt:
       - no-new-privileges:true
