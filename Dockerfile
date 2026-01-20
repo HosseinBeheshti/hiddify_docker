@@ -69,6 +69,9 @@ RUN echo '#!/bin/bash' > /usr/local/bin/setup-firewall.sh && \
 RUN echo '#!/bin/bash' > /usr/local/bin/docker-entrypoint.sh && \
     echo 'set -e' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '# Fix hostname resolution' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'echo "127.0.0.1 $(hostname)" >> /etc/hosts' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '# Setup firewall (requires NET_ADMIN capability)' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '/usr/local/bin/setup-firewall.sh' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '' >> /usr/local/bin/docker-entrypoint.sh && \
