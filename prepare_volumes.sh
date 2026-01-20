@@ -6,8 +6,8 @@ set -e
 
 echo "Creating necessary directories..."
 
-# Create base directories
-mkdir -p docker-data/{hiddify,logs,tmp,etc/{nginx,xray,singbox,ssl},mariadb,redis}
+# Create base directories (only the ones we actually mount as volumes)
+mkdir -p docker-data/{hiddify,logs,tmp,mariadb,redis}
 
 # Set proper permissions
 chmod -R 755 docker-data/
