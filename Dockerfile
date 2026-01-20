@@ -3,6 +3,7 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV USER=vncuser
 ENV DISPLAY=:5
+ENV PASSWORD=password
 
 # Install TigerVNC and basic desktop environment
 RUN apt-get update && \
@@ -24,7 +25,8 @@ RUN apt-get update && \
 
 # Create VNC user
 RUN useradd -m -s /bin/bash ${USER} && \
-    echo "${USER}:password" | chpasswd && \
+    echo "${USER}:${PASSWORD}" | chpasswd && \
+    echo "root:${PASSWORD}" | chpasswd && \
     echo "${USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Create VNC directory

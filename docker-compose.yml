@@ -13,6 +13,7 @@ services:
     environment:
       - DISPLAY=:5
       - USER=vncuser
+      - PASSWORD=password
     
     volumes:
       - ./hiddify-home:/home/vncuser
