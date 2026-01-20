@@ -16,7 +16,7 @@ services:
       - PASSWORD=mypass
     
     volumes:
-      - ./hiddify-home:/home/hiddifyuser
+      - ./hiddify-home:/home/${USER:-hiddifyuser}
     
     stdin_open: true
     tty: true

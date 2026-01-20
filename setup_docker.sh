@@ -6,6 +6,14 @@ echo "==========================================="
 echo "   Ubuntu 24.04 TigerVNC Docker Setup"
 echo "==========================================="
 
+# Deep clean Docker
+echo "Cleaning up old containers and images..."
+docker compose down 2>/dev/null || true
+docker rm -f hiddify-docker 2>/dev/null || true
+docker rmi -f hiddify_docker-hiddify 2>/dev/null || true
+docker system prune -f
+
+echo ""
 # Build the image
 echo "Building Ubuntu VNC image..."
 docker compose build
