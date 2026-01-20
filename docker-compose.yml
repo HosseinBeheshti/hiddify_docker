@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USER: ${USER:-hiddifyuser}
+        PASSWORD: ${PASSWORD:-mypass}
     container_name: hiddify-docker
     hostname: hiddify-docker
     restart: unless-stopped

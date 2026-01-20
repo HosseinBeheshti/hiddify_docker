@@ -1,9 +1,12 @@
 FROM ubuntu:24.04
 
+ARG USER=vncuser
+ARG PASSWORD=password
+
 ENV DEBIAN_FRONTEND=noninteractive
-ENV USER=vncuser
+ENV USER=${USER}
 ENV DISPLAY=:5
-ENV PASSWORD=password
+ENV PASSWORD=${PASSWORD}
 
 # Install TigerVNC and basic desktop environment
 RUN apt-get update && \
