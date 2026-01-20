@@ -24,11 +24,5 @@ services:
     stdin_open: true
     tty: true
     
-    # Security: Drop unnecessary capabilities
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - DAC_OVERRIDE  # Required to fix volume permissions
-      - SETGID
-      - SETUID
+    # Privileged mode for Hiddify Manager installation
+    privileged: true
