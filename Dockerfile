@@ -55,9 +55,8 @@ RUN echo '#!/bin/bash' > /usr/local/bin/setup-firewall.sh && \
     echo 'iptables -A OUTPUT -o lo -p tcp --dport 5905 -j ACCEPT' >> /usr/local/bin/setup-firewall.sh && \
     echo 'iptables -A OUTPUT -o lo -p tcp --dport 6005 -j ACCEPT' >> /usr/local/bin/setup-firewall.sh && \
     echo '' >> /usr/local/bin/setup-firewall.sh && \
-    echo '# Block access to all other localhost services' >> /usr/local/bin/setup-firewall.sh && \
+    echo '# Block access to all other localhost services (IPv4)' >> /usr/local/bin/setup-firewall.sh && \
     echo 'iptables -A OUTPUT -d 127.0.0.0/8 -j REJECT' >> /usr/local/bin/setup-firewall.sh && \
-    echo 'iptables -A OUTPUT -d ::1/128 -j REJECT' >> /usr/local/bin/setup-firewall.sh && \
     echo '' >> /usr/local/bin/setup-firewall.sh && \
     echo '# Allow all external traffic (internet)' >> /usr/local/bin/setup-firewall.sh && \
     echo 'iptables -A OUTPUT -j ACCEPT' >> /usr/local/bin/setup-firewall.sh && \
