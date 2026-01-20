@@ -15,9 +15,11 @@ fi
 
 CONTAINER_NAME="hiddify-lxc"
 
-echo "Installing LXD/LXC..."
-apt update
-apt install -y lxd lxd-client snapd
+echo "Installing LXD via snap..."
+snap install lxd --channel=latest/stable
+
+# Add current user to lxd group
+usermod -aG lxd $SUDO_USER 2>/dev/null || true
 
 # Initialize LXD with defaults
 echo ""
