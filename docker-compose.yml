@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: hiddify-docker
     hostname: hiddify-docker
-    network_mode: host  # Uses the same IP as the host server
+    network_mode: host  # Same IP as VPS (required for your use case)
     restart: unless-stopped
     
     environment:
@@ -17,3 +17,15 @@ services:
     
     stdin_open: true
     tty: true
+    
+    # Security: Drop unnecessary capabilities
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+      - NET_ADMIN  # Required for iptables firewall rules
+    security_opt:
+      - no-new-privileges:true
