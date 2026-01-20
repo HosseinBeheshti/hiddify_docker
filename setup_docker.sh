@@ -90,6 +90,13 @@ else
     exit 1
 fi
 
+if [ -f "$SCRIPT_DIR/prepare_volumes.sh" ]; then
+    sudo cp "$SCRIPT_DIR/prepare_volumes.sh" "$INSTALL_DIR/"
+    sudo chmod +x "$INSTALL_DIR/prepare_volumes.sh"
+else
+    print_warning "prepare_volumes.sh not found in $SCRIPT_DIR (optional)"
+fi
+
 # Set ownership of copied files
 sudo chown -R $USER:$USER $INSTALL_DIR 2>/dev/null || sudo chown -R $SUDO_USER:$SUDO_USER $INSTALL_DIR
 
@@ -111,9 +118,17 @@ print_message "Generated passwords saved in docker.env"
 
 # Create data directories
 print_message "Creating data directories..."
-mkdir -p docker-data/{hiddify,mariadb,redis,logs,tmp}
 
-# Set proper permissions
+# Run prepare_volumes script if it exists
+if [ -f "$INSTALL_DIR/prepare_volumes.sh" ]; then
+    print_message "Running prepare_volumes.sh to set up directory structure..."
+    bash "$INSTALL_DIR/prepare_volumes.sh"
+else
+    # Fallback to basic directory creation
+    mkdir -p docker-data/{hiddify,mariadb,redis,logs,tmp}
+fi
+
+# Ensure database directories have proper permissions
 chmod 700 docker-data/mariadb
 chmod 700 docker-data/redis
 

@@ -19,6 +19,10 @@ services:
       - SETUID
       - SETGID
       - DAC_OVERRIDE
+      - DAC_READ_SEARCH
+      - FOWNER
+      - SYS_MODULE
+      - SYS_ADMIN
     cap_drop:
       - ALL
     
@@ -26,9 +30,15 @@ services:
     # Commented out as it may cause issues with some operations
     # read_only: true
     
-    # Security: Prevent privilege escalation (Commented out as it breaks sudo/setuid needed by install scripts)
+    # Security: Prevent privilege escalation (Disabled for Hiddify operations)
     # security_opt:
     #   - no-new-privileges:true
+    
+    # Required for iptables and system modifications
+    privileged: false
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv6.conf.all.disable_ipv6=0
     
     # Resource limits to prevent container from consuming all host resources
     deploy:
@@ -48,6 +58,16 @@ services:
       - ./docker-data/logs:/opt/hiddify-manager/log:rw
       # Temporary files
       - ./docker-data/tmp:/tmp:rw
+      # Add writable volumes for system operations
+      - ./docker-data/etc/nginx:/opt/hiddify-manager/nginx:rw
+      - ./docker-data/etc/xray:/opt/hiddify-manager/xray:rw
+      - ./docker-data/etc/singbox:/opt/hiddify-manager/singbox:rw
+      - ./docker-data/etc/ssl:/opt/hiddify-manager/ssl:rw
+      # Tmpfs mounts for systemd-like behavior
+      - type: tmpfs
+        target: /run
+      - type: tmpfs
+        target: /run/lock
     
     # Environment configuration
     env_file:
