@@ -32,5 +32,3 @@ services:
       - DAC_OVERRIDE  # Required to fix volume permissions
       - SETGID
       - SETUID
-    security_opt:
-      - no-new-privileges:true
